@@ -1,12 +1,12 @@
 "use client";
 
-import type { DiagramLayer as LayerType, DiagramNode } from "@/data/nodes";
+import type { DiagramNode as DiagramNodeType } from "@/data/nodes";
 import DiagramNode from "./DiagramNode";
 
 interface Props {
   layer: LayerType;
   selectedId: string | null;
-  onSelect: (node: DiagramNode) => void;
+  onSelect: (node: DiagramNodeType) => void;
 }
 
 export default function DiagramLayer({ layer, selectedId, onSelect }: Props) {
