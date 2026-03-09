@@ -8,7 +8,7 @@ interface Props {
   onSelect: (node: DiagramNodeData) => void;
 }
 
-export default function DiagramNode({ node, isSelected, onSelect }: Props) {
+export default function DiagramNodeCard({ node, isSelected, onSelect }: Props) {
   return (
     <button
       onClick={() => onSelect(node)}
