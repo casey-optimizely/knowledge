@@ -1,11 +1,11 @@
 "use client";
 
-import type { DiagramNode } from "@/data/nodes";
+import type { DiagramNode as DiagramNodeData } from "@/data/nodes";
 
 interface Props {
-  node: DiagramNode;
+  node: DiagramNodeData;
   isSelected: boolean;
-  onSelect: (node: DiagramNode) => void;
+  onSelect: (node: DiagramNodeData) => void;
 }
 
 export default function DiagramNode({ node, isSelected, onSelect }: Props) {
