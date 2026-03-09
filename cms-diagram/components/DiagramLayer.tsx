@@ -1,12 +1,12 @@
 "use client";
 
-import type { DiagramNode as DiagramNodeType } from "@/data/nodes";
-import DiagramNode from "./DiagramNode";
+import type { DiagramLayer as LayerType, DiagramNode } from "@/data/nodes";
+import DiagramNodeCard from "./DiagramNode";
 
 interface Props {
   layer: LayerType;
   selectedId: string | null;
-  onSelect: (node: DiagramNodeType) => void;
+  onSelect: (node: DiagramNode) => void;
 }
 
 export default function DiagramLayer({ layer, selectedId, onSelect }: Props) {
@@ -20,7 +20,7 @@ export default function DiagramLayer({ layer, selectedId, onSelect }: Props) {
       {/* Nodes row */}
       <div className="flex flex-wrap justify-center gap-3">
         {layer.nodes.map((node) => (
-          <DiagramNode
+          <DiagramNodeCard
             key={node.id}
             node={node}
             isSelected={selectedId === node.id}
