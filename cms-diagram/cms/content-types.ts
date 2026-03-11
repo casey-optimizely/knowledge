@@ -19,6 +19,7 @@ export const OptiNode = contentType({
       description: "Short display name shown on the diagram card and as the flyout heading",
       required: true,
       indexingType: "searchable",
+      group: "Information",
       sortOrder: 10,
     },
 
@@ -27,6 +28,7 @@ export const OptiNode = contentType({
       allowedTypes: ["_image", "_media"],
       displayName: "Icon Image",
       description: "Image from the media library shown on the diagram card. Use a square PNG or SVG (recommended: 64×64px or larger).",
+      group: "Information",
       sortOrder: 20,
     },
 
@@ -36,6 +38,7 @@ export const OptiNode = contentType({
       description: "Which layer of the architecture this node belongs to — controls its placement and colour in the diagram",
       required: true,
       indexingType: "queryable",
+      group: "Information",
       sortOrder: 30,
       enum: [
         { value: "client",      displayName: "Client" },
@@ -54,6 +57,7 @@ export const OptiNode = contentType({
       displayName: "Summary",
       description: "One-sentence description shown at the top of the flyout panel",
       indexingType: "searchable",
+      group: "Information",
       sortOrder: 40,
     },
 
@@ -62,6 +66,7 @@ export const OptiNode = contentType({
       displayName: "Description",
       description: "Full description rendered in the flyout body — supports bold, lists, and links",
       indexingType: "searchable",
+      group: "Information",
       sortOrder: 50,
     },
 
@@ -71,6 +76,7 @@ export const OptiNode = contentType({
       displayName: "Responsibilities",
       description: "Bullet points shown under 'Responsibilities' in the flyout",
       indexingType: "searchable",
+      group: "Information",
       sortOrder: 60,
     },
 
@@ -79,6 +85,7 @@ export const OptiNode = contentType({
       items: { type: "string" },
       displayName: "Common Tools & Vendors",
       description: "Technology pills shown in the flyout (e.g. Cloudinary, Algolia, Vercel)",
+      group: "Information",
       sortOrder: 70,
     },
 
@@ -89,6 +96,7 @@ export const OptiNode = contentType({
       items: { type: "link" },
       displayName: "Learn More Links",
       description: "Labeled links (display text + URL) shown in the flyout resources section",
+      group: "Information",
       sortOrder: 80,
     },
 
@@ -97,6 +105,7 @@ export const OptiNode = contentType({
       items: { type: "link" },
       displayName: "Document Resources",
       description: "Links to PDFs, guides, or whitepapers relevant to this node",
+      group: "Information",
       sortOrder: 90,
     },
 
@@ -104,6 +113,7 @@ export const OptiNode = contentType({
       type: "url",
       displayName: "Featured Video URL",
       description: "YouTube or Vimeo URL — rendered as an embedded player in the flyout",
+      group: "Information",
       sortOrder: 100,
     },
 
@@ -129,6 +139,7 @@ export const LaunchOptiDomain = contentType({
       description: "Displayed as the heading above the diagram",
       required: true,
       indexingType: "searchable",
+      group: "Information",
       sortOrder: 10,
     },
 
@@ -136,6 +147,7 @@ export const LaunchOptiDomain = contentType({
       type: "string",
       displayName: "Domain Description",
       description: "Short description of what this domain of knowledge covers",
+      group: "Information",
       sortOrder: 20,
     },
 
@@ -151,6 +163,7 @@ export const LaunchOptiDomain = contentType({
       },
       displayName: "Diagram Nodes",
       description: "Ordered list of Opti Nodes that appear in the diagram. Add, remove, and reorder here to control the diagram layout.",
+      group: "Information",
       sortOrder: 30,
     },
 
