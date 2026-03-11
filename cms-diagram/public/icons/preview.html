@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CMS Diagram Icons</title>
+  <style>
+    body { background: #0f172a; color: #e2e8f0; font-family: sans-serif; padding: 32px; }
+    h1   { font-size: 1.4rem; margin-bottom: 24px; color: #94a3b8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .card img  { width: 48px; height: 48px; }
+    .card .name { font-size: 0.75rem; text-align: center; color: #94a3b8; }
+    .card .file { font-size: 0.65rem; text-align: center; color: #475569; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>cms-diagram icons — upload these to Optimizely Media Library</h1>
+  <div class="grid" id="grid"></div>
+  <script>
+    const icons = [
+      { file: "browser-client.svg",  name: "Browser / Client"   },
+      { file: "cdn.svg",             name: "CDN"                 },
+      { file: "edge-functions.svg",  name: "Edge Functions"      },
+      { file: "nextjs-app.svg",      name: "Next.js App"         },
+      { file: "personalization.svg", name: "Personalization"     },
+      { file: "api-gateway.svg",     name: "API Gateway"         },
+      { file: "webhooks.svg",        name: "Webhooks"            },
+      { file: "graphql-api.svg",     name: "GraphQL / REST API"  },
+      { file: "headless-cms.svg",    name: "Headless CMS"        },
+      { file: "commerce.svg",        name: "Commerce"            },
+      { file: "dam.svg",             name: "DAM"                 },
+      { file: "search.svg",          name: "Search"              },
+      { file: "database.svg",        name: "Database"            },
+      { file: "cache.svg",           name: "Cache"               },
+      { file: "auth-identity.svg",   name: "Auth / Identity"     },
+      { file: "cicd-hosting.svg",    name: "CI/CD & Hosting"     },
+    ];
+    const grid = document.getElementById("grid");
+    icons.forEach(({ file, name }) => {
+      grid.innerHTML += `
+        <div class="card">
+          <img src="${file}" alt="${name}" />
+          <div class="name">${name}</div>
+          <div class="file">${file}</div>
+        </div>`;
+    });
+  </script>
+</body>
+</html>
