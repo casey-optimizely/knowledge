@@ -1,6 +1,6 @@
 import "@/cms/content-types"; // ensure registry is initialized
-import { graphClient } from "./optimizely-client";
 import { GraphClient } from "@optimizely/cms-sdk";
+import { graphClient } from "./optimizely-client";
 import { layers as fallback } from "@/data/nodes";
 import type { DiagramLayer, DiagramNode } from "@/data/nodes";
 
@@ -98,9 +98,19 @@ const PAGE_TITLE_QUERY = `
 
 // ─── Fetchers ─────────────────────────────────────────────────────────────────
 
-export async function fetchPageTitle(): Promise<string> {
+// Build a one-off client with the preview token when needed; reuse the shared
+// published-content client otherwise.
+function clientFor(previewToken?: string) {
+  return previewToken
+    ? new GraphClient(process.env.OPTIMIZELY_GRAPH_SINGLE_KEY!, {
+        graphUrl: `${process.env.OPTIMIZELY_GRAPH_GATEWAY}/content/v2?preview_token=${previewToken}`,
+      })
+    : graphClient;
+}
+
+export async function fetchPageTitle(previewToken?: string): Promise<string> {
   try {
-    const result = await graphClient.request(PAGE_TITLE_QUERY, {});
+    const result = await clientFor(previewToken).request(PAGE_TITLE_QUERY, {});
     return result?.LaunchOptiDomain?.items?.[0]?.Title ?? "";
   } catch (err) {
     console.error("fetchPageTitle failed:", err);
@@ -108,9 +118,9 @@ export async function fetchPageTitle(): Promise<string> {
   }
 }
 
-export async function fetchDiagramData(): Promise<DiagramLayer[]> {
+export async function fetchDiagramData(previewToken?: string): Promise<DiagramLayer[]> {
   try {
-    const result = await graphClient.request(DIAGRAM_QUERY, {});
+    const result = await clientFor(previewToken).request(DIAGRAM_QUERY, {});
     const items: any[] = result?.optiNode?.items ?? [];
 
     if (items.length === 0) return fallback;
@@ -149,15 +159,7 @@ export async function fetchNodePreview(
   previewToken?: string,
 ): Promise<DiagramNode | null> {
   try {
-    // If a preview token is present, append it to the Graph URL so Graph returns
-    // draft content. Otherwise fall back to the shared published-content client.
-    const client = previewToken
-      ? new GraphClient(process.env.OPTIMIZELY_GRAPH_SINGLE_KEY!, {
-          graphUrl: `${process.env.OPTIMIZELY_GRAPH_GATEWAY}/content/v2?preview_token=${previewToken}`,
-        })
-      : graphClient;
-
-    const result = await client.request(NODE_BY_KEY_QUERY, { key });
+    const result = await clientFor(previewToken).request(NODE_BY_KEY_QUERY, { key });
     const item = result?.optiNode?.items?.[0];
     return item ? mapNodeItem(item) : null;
   } catch (err) {
