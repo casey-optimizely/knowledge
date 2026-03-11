@@ -1,14 +1,26 @@
+// Structured link — matches the shape Optimizely Graph returns for `link` type fields
+export interface ContentLink {
+  text?: string;
+  href?: string;
+  title?: string;
+  target?: string;
+}
+
 export interface DiagramNode {
   id: string;
   label: string;
   icon: string;
   layerId: string;
-  colorClass: string;       // border + text accent color
-  bgClass: string;          // node background
-  description: string;
+  colorClass: string;           // border + text accent color — derived from layerId in code, never stored in CMS
+  bgClass: string;              // node background — same
+  summary?: string;             // short one-liner shown at top of flyout
+  description?: string;         // HTML string from CMS richText field (or plain string in static fallback)
   responsibilities: string[];
   techExamples: string[];
-  learnMoreUrl?: string;
+  learnMoreLinks?: ContentLink[];   // labeled links replacing the old single learnMoreUrl
+  documentLinks?: ContentLink[];    // PDF / guide links
+  featuredVideoUrl?: string;        // YouTube / Vimeo URL for embedded player
+  learnMoreUrl?: string;            // kept for static fallback data compatibility
 }
 
 export interface DiagramLayer {

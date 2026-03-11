@@ -25,7 +25,13 @@ export default function DiagramNodeCard({ node, isSelected, onSelect }: Props) {
       aria-pressed={isSelected}
       aria-label={`View details for ${node.label}`}
     >
-      <span className="text-2xl leading-none">{node.icon}</span>
+      {/* Icon — rendered for both emoji (CMS) and symbol strings */}
+      {node.icon && (
+        <span className="text-xl leading-none" aria-hidden="true">
+          {node.icon}
+        </span>
+      )}
+
       <span className="text-xs font-semibold text-center leading-tight text-gray-100">
         {node.label}
       </span>

@@ -8,9 +8,10 @@ import SidePanel from "@/components/SidePanel";
 
 interface Props {
   layers: DiagramLayerData[];
+  title?: string;
 }
 
-export default function DiagramApp({ layers }: Props) {
+export default function DiagramApp({ layers, title }: Props) {
   const [selectedNode, setSelectedNode] = useState<DiagramNode | null>(null);
 
   // Close panel on Escape key
@@ -40,7 +41,7 @@ export default function DiagramApp({ layers }: Props) {
         {/* Header */}
         <header className="mb-10 text-center">
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Composable CMS Architecture
+            {title || "Composable CMS Architecture"}
           </h1>
           <p className="mt-2 text-sm text-gray-400">
             Click any component to explore its role in the stack
