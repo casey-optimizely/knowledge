@@ -2,25 +2,22 @@
 // Entry-point for Optimizely SaaS CMS preview mode.
 //
 // The CMS calls this URL when an editor clicks "Preview" on a content item.
-// It passes these query parameters:
+// Standard parameters sent by the CMS:
 //   preview_token  — short-lived JWT that unlocks draft content in Graph
 //   key            — content item key (GUID)
 //   ver            — content version number
 //   loc            — locale (e.g. "en")
 //
-// We also read an optional `type` param we inject into the URL template per
-// content type so we know where to redirect:
-//   type=domain    → LaunchOptiDomain  → redirect to / (full diagram, draft mode)
-//   type=node      → optiNode          → redirect to /preview?key={key}
-//   (omitted)      → falls back to /preview?key={key}
+// ── Preview URL to register in CMS ───────────────────────────────────────────
 //
-// ── CMS Preview URL registration ─────────────────────────────────────────────
+// Settings → Applications → [your app] → Preview URL  (used for ALL types):
 //
-// Settings → Content Types → LaunchOptiDomain → Preview URL:
-//   https://<your-app>/api/preview?type=domain&preview_token={preview_token}&key={key}&ver={ver}&loc={loc}
+//   https://<your-app>/api/preview?preview_token={preview_token}&key={key}&ver={ver}&loc={loc}
 //
-// optiNode is a _component type — no built-in Preview URL field.
-// Use the /preview page directly for manual previews (see /2 below).
+// No `type=` parameter needed — the route auto-detects whether the key belongs
+// to an optiNode (→ /preview?key=) or a LaunchOptiDomain (→ /).
+//
+// If you ever need to force a specific target, add ?type=domain or ?type=node.
 //
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -28,6 +25,7 @@ import { draftMode } from "next/headers";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextRequest } from "next/server";
+import { fetchNodePreview } from "@/lib/fetch-diagram-data";
 
 export const dynamic = "force-dynamic";
 
@@ -37,10 +35,25 @@ export async function GET(req: NextRequest) {
   const key          = searchParams.get("key") ?? "";
   const ver          = searchParams.get("ver") ?? "";
   const loc          = searchParams.get("loc") ?? "en";
-  const type         = searchParams.get("type") ?? "node"; // "domain" | "node"
+
+  // `type` can be forced in the URL template for manual overrides, but is
+  // optional — without it we auto-detect via a lightweight Graph probe below.
+  const explicitType = searchParams.get("type"); // "domain" | "node" | null
 
   if (!key) {
     return new Response("Missing required parameter: key", { status: 400 });
+  }
+
+  // ── Auto-detect content type ───────────────────────────────────────────────
+  // Probe Graph with the preview token to determine what kind of content this
+  // key belongs to.  If fetchNodePreview returns a result → optiNode.
+  // If it returns null → assume LaunchOptiDomain (page / domain).
+  // Explicit `type=` param always wins (useful for per-content-type URL templates
+  // or manual /api/preview?type=domain links).
+  let type = explicitType ?? "node";
+  if (!explicitType && previewToken) {
+    const node = await fetchNodePreview(key, previewToken);
+    type = node ? "node" : "domain";
   }
 
   // Enable Next.js draft mode — disables static caching for preview routes.
@@ -48,12 +61,13 @@ export async function GET(req: NextRequest) {
 
   // Persist the preview params in cookies so pages can read them server-side.
   const cookieStore = await cookies();
-  cookieStore.set("opti_preview_token", previewToken, { path: "/", httpOnly: true, sameSite: "none", secure: true });
-  cookieStore.set("opti_preview_key",   key,          { path: "/", httpOnly: true, sameSite: "none", secure: true });
-  cookieStore.set("opti_preview_ver",   ver,          { path: "/", httpOnly: true, sameSite: "none", secure: true });
-  cookieStore.set("opti_preview_loc",   loc,          { path: "/", httpOnly: true, sameSite: "none", secure: true });
+  const cookieOpts = { path: "/", httpOnly: true, sameSite: "none" as const, secure: true };
+  cookieStore.set("opti_preview_token", previewToken, cookieOpts);
+  cookieStore.set("opti_preview_key",   key,          cookieOpts);
+  cookieStore.set("opti_preview_ver",   ver,          cookieOpts);
+  cookieStore.set("opti_preview_loc",   loc,          cookieOpts);
 
-  // LaunchOptiDomain → show the full diagram (home page) in draft mode.
+  // LaunchOptiDomain → show the full diagram in draft mode.
   // optiNode / anything else → show the individual node preview page.
   if (type === "domain") {
     redirect("/");
