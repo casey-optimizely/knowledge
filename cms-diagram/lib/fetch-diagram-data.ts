@@ -27,7 +27,7 @@ const DIAGRAM_QUERY = `
     optiNode {
       items {
         label
-        icon { _assetMetadata { url } }
+        icon { url { default } }
         layerId
         summary
         description { html }
@@ -83,9 +83,9 @@ export async function fetchDiagramData(): Promise<DiagramLayer[]> {
       return {
         id:              node._metadata?.key ?? node.label,
         label:           node.label ?? "",
-        // icon is now a contentReference to _image/_media — extract the asset URL.
-        // Falls back to empty string (no icon shown) if not yet set.
-        icon:            node.icon?._assetMetadata?.url ?? "",
+        // icon is a contentReference — Graph exposes the asset URL via ContentUrl.default.
+        // Falls back to empty string (no icon shown) if not yet set in CMS.
+        icon:            node.icon?.url?.default ?? "",
         layerId,
         colorClass:      meta.colorClass,
         bgClass:         meta.bgClass,
