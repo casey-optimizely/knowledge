@@ -94,7 +94,18 @@ export default function SidePanel({ node, onClose }: Props) {
             {/* ── Header ── */}
             <div className={`flex items-start justify-between gap-3 p-5 border-b border-gray-700 ${node.bgClass}`}>
               <div className="flex items-center gap-3">
-                {node.icon && <span className="text-3xl">{node.icon}</span>}
+                {node.icon && (
+                  node.icon.startsWith("http") ? (
+                    <img
+                      src={node.icon}
+                      alt=""
+                      aria-hidden="true"
+                      className="w-10 h-10 object-contain"
+                    />
+                  ) : (
+                    <span className="text-3xl">{node.icon}</span>
+                  )
+                )}
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                     Component

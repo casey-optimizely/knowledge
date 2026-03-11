@@ -25,11 +25,21 @@ export default function DiagramNodeCard({ node, isSelected, onSelect }: Props) {
       aria-pressed={isSelected}
       aria-label={`View details for ${node.label}`}
     >
-      {/* Icon — rendered for both emoji (CMS) and symbol strings */}
+      {/* Icon — URL from media library renders as <img>;
+          short emoji/symbol string from static fallback renders as <span> */}
       {node.icon && (
-        <span className="text-xl leading-none" aria-hidden="true">
-          {node.icon}
-        </span>
+        node.icon.startsWith("http") ? (
+          <img
+            src={node.icon}
+            alt=""
+            aria-hidden="true"
+            className="w-8 h-8 object-contain"
+          />
+        ) : (
+          <span className="text-xl leading-none" aria-hidden="true">
+            {node.icon}
+          </span>
+        )
       )}
 
       <span className="text-xs font-semibold text-center leading-tight text-gray-100">

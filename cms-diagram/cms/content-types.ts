@@ -23,9 +23,10 @@ export const OptiNode = contentType({
     },
 
     icon: {
-      type: "string",
-      displayName: "Icon",
-      description: "Emoji or symbol shown on the diagram card (e.g. 🖼️, ⚡, 🔍)",
+      type: "contentReference",
+      allowedTypes: ["_image", "_media"],
+      displayName: "Icon Image",
+      description: "Image from the media library shown on the diagram card. Use a square PNG or SVG (recommended: 64×64px or larger).",
       sortOrder: 20,
     },
 
