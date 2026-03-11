@@ -1,5 +1,6 @@
 import "@/cms/content-types"; // ensure registry is initialized
 import { graphClient } from "./optimizely-client";
+import { GraphClient } from "@optimizely/cms-sdk";
 import { layers as fallback } from "@/data/nodes";
 import type { DiagramLayer, DiagramNode } from "@/data/nodes";
 
@@ -20,24 +21,66 @@ const LAYER_META: Record<string, { label: string; colorClass: string; bgClass: s
 // Controls top-to-bottom layer order in the diagram
 const LAYER_ORDER = ["client", "edge", "frontend", "integration", "services", "foundation"];
 
+// ─── Shared field fragment (reused in both queries) ───────────────────────────
+
+const NODE_FIELDS = `
+  label
+  icon { url { default } }
+  layerId
+  summary
+  description { html }
+  responsibilities
+  techExamples
+  learnMoreLinks { text title target url { default } }
+  documentLinks  { text title target url { default } }
+  featuredVideoUrl { default }
+  _metadata { key }
+`;
+
+// ─── Shared mapping helper ────────────────────────────────────────────────────
+
+export function mapNodeItem(node: any): DiagramNode {
+  const layerId = node.layerId ?? "services";
+  const meta = LAYER_META[layerId] ?? LAYER_META.services;
+  return {
+    id:               node._metadata?.key ?? node.label,
+    label:            node.label ?? "",
+    icon:             node.icon?.url?.default ?? "",
+    layerId,
+    colorClass:       meta.colorClass,
+    bgClass:          meta.bgClass,
+    summary:          node.summary || undefined,
+    description:      node.description?.html || undefined,
+    responsibilities: node.responsibilities ?? [],
+    techExamples:     node.techExamples ?? [],
+    learnMoreLinks: node.learnMoreLinks?.length
+      ? node.learnMoreLinks.map((l: any) => ({ text: l.text, title: l.title, target: l.target, href: l.url?.default }))
+      : undefined,
+    documentLinks: node.documentLinks?.length
+      ? node.documentLinks.map((l: any) => ({ text: l.text, title: l.title, target: l.target, href: l.url?.default }))
+      : undefined,
+    featuredVideoUrl: node.featuredVideoUrl?.default || undefined,
+    learnMoreUrl:     node.learnMoreLinks?.[0]?.url?.default ?? undefined,
+  };
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 const DIAGRAM_QUERY = `
   query GetNodes {
     optiNode {
-      items {
-        label
-        icon { url { default } }
-        layerId
-        summary
-        description { html }
-        responsibilities
-        techExamples
-        learnMoreLinks { text title target url { default } }
-        documentLinks  { text title target url { default } }
-        featuredVideoUrl { default }
-        _metadata { key }
-      }
+      items { ${NODE_FIELDS} }
+    }
+  }
+`;
+
+// Single-node query used by the preview page — filters by _metadata.key.
+// When a preview_token is present we send it to the Graph endpoint so that
+// unpublished (draft) content is included in the response.
+const NODE_BY_KEY_QUERY = `
+  query GetNodeByKey($key: String!) {
+    optiNode(where: { _metadata: { key: { eq: $key } } }) {
+      items { ${NODE_FIELDS} }
     }
   }
 `;
@@ -72,42 +115,7 @@ export async function fetchDiagramData(): Promise<DiagramLayer[]> {
 
     if (items.length === 0) return fallback;
 
-    // Map each CMS item to a DiagramNode.
-    // colorClass and bgClass are derived here from layerId — not stored in CMS.
-    // description comes back as an HTML string inside `{ html }` from richText.
-    // learnMoreLinks / documentLinks are arrays of { text, href, title, target }.
-    const nodes: DiagramNode[] = items.map((node: any) => {
-      const layerId = node.layerId ?? "services";
-      const meta = LAYER_META[layerId] ?? LAYER_META.services;
-
-      return {
-        id:              node._metadata?.key ?? node.label,
-        label:           node.label ?? "",
-        // icon is a contentReference — Graph exposes the asset URL via ContentUrl.default.
-        // Falls back to empty string (no icon shown) if not yet set in CMS.
-        icon:            node.icon?.url?.default ?? "",
-        layerId,
-        colorClass:      meta.colorClass,
-        bgClass:         meta.bgClass,
-        summary:          node.summary || undefined,
-        description:      node.description?.html || undefined,
-        responsibilities: node.responsibilities ?? [],
-        techExamples:     node.techExamples ?? [],
-        // Link items from Graph: { text, title, target, url: { default } }
-        // We normalise url.default → href so the UI ContentLink interface stays stable
-        learnMoreLinks: node.learnMoreLinks?.length
-          ? node.learnMoreLinks.map((l: any) => ({ text: l.text, title: l.title, target: l.target, href: l.url?.default }))
-          : undefined,
-        documentLinks: node.documentLinks?.length
-          ? node.documentLinks.map((l: any)  => ({ text: l.text, title: l.title, target: l.target, href: l.url?.default }))
-          : undefined,
-        // featuredVideoUrl from Graph: ContentUrl object — we only need the default URL string
-        featuredVideoUrl: node.featuredVideoUrl?.default || undefined,
-        // backward-compat: populate learnMoreUrl from first learnMoreLink so
-        // any code still referencing the old field continues to work
-        learnMoreUrl: node.learnMoreLinks?.[0]?.url?.default ?? undefined,
-      };
-    });
+    const nodes: DiagramNode[] = items.map(mapNodeItem);
 
     // Group nodes by their layerId, then emit layers in the fixed LAYER_ORDER.
     // Layers that have no CMS nodes are simply omitted rather than shown empty.
@@ -128,5 +136,32 @@ export async function fetchDiagramData(): Promise<DiagramLayer[]> {
   } catch (err) {
     console.error("Optimizely Graph fetch failed, using static fallback:", err);
     return fallback;
+  }
+}
+
+// ─── Preview fetcher ──────────────────────────────────────────────────────────
+// Used by /preview page. When the CMS calls our preview URL it passes a
+// preview_token that unlocks draft/unpublished content in Graph.
+// We build a one-off GraphClient with the token appended to the endpoint so
+// Graph returns the current saved (possibly unpublished) state of the item.
+export async function fetchNodePreview(
+  key: string,
+  previewToken?: string,
+): Promise<DiagramNode | null> {
+  try {
+    // If a preview token is present, append it to the Graph URL so Graph returns
+    // draft content. Otherwise fall back to the shared published-content client.
+    const client = previewToken
+      ? new GraphClient(process.env.OPTIMIZELY_GRAPH_SINGLE_KEY!, {
+          graphUrl: `${process.env.OPTIMIZELY_GRAPH_GATEWAY}/content/v2?preview_token=${previewToken}`,
+        })
+      : graphClient;
+
+    const result = await client.request(NODE_BY_KEY_QUERY, { key });
+    const item = result?.optiNode?.items?.[0];
+    return item ? mapNodeItem(item) : null;
+  } catch (err) {
+    console.error("fetchNodePreview failed:", err);
+    return null;
   }
 }
