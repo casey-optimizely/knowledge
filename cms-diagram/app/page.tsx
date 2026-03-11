@@ -11,6 +11,7 @@ import { draftMode } from "next/headers";
 import { cookies } from "next/headers";
 import { fetchDiagramData, fetchPageTitle } from "@/lib/fetch-diagram-data";
 import DiagramApp from "@/components/DiagramApp";
+import PreviewRefresh from "@/components/PreviewRefresh";
 
 export default async function Home() {
   const { isEnabled: isDraft } = await draftMode();
@@ -22,5 +23,10 @@ export default async function Home() {
     fetchPageTitle(previewToken),
   ]);
 
-  return <DiagramApp layers={layers} title={title} isDraft={isDraft} />;
+  return (
+    <>
+      <DiagramApp layers={layers} title={title} isDraft={isDraft} />
+      {isDraft && <PreviewRefresh />}
+    </>
+  );
 }

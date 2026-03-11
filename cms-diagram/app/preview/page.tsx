@@ -16,6 +16,7 @@ import { cookies } from "next/headers";
 import { fetchNodePreview } from "@/lib/fetch-diagram-data";
 import { ExternalLink, FileText, X, Eye, EyeOff } from "lucide-react";
 import type { DiagramNode, ContentLink } from "@/data/nodes";
+import PreviewRefresh from "@/components/PreviewRefresh";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -94,6 +95,7 @@ export default async function PreviewPage({
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
+      <PreviewRefresh />
 
       {/* ── Preview banner ── */}
       <div className={`flex items-center justify-between px-5 py-2.5 text-xs font-medium
